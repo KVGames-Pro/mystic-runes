@@ -29,18 +29,22 @@
         // Инициализация рекламы (ВСТАВЬ СВОЙ BLOCK ID СЮДА)
         const AdController = window.Adsgram.init({ blockId: "54975" });
 
-        // Функция для показа рекламы из Godot
-        function showTgAd(onSuccess, onError) {
-            if (AdController) {
-                AdController.show().then((result) => {
-                    onSuccess(); 
-                }).catch((result) => {
-                    onError(); 
-                });
-            } else {
-                onError();
-            }
-        }
+        // Функция для показа рекламы из Godot с проверкой ошибок
+function showTgAd(onSuccess, onError) {
+    console.log("Godot запросил показ рекламы...");
+    if (AdController) {
+        AdController.show().then((result) => {
+            console.log("УСПЕХ! Игрок досмотрел рекламу. Результат: ", result);
+            onSuccess(); 
+        }).catch((error) => {
+            console.log("ОШИБКА или отмена показа рекламы: ", error);
+            onError(); 
+        });
+    } else {
+        console.log("ОШИБКА КРИТИЧЕСКАЯ: AdController не найден!");
+        onError();
+    }
+}
     </script>
 </body>
 </html>
