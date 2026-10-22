@@ -22,23 +22,48 @@
         engine.startGame();
 
         // Расширяем игру на весь экран в Telegram
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        Telegram.WebApp.disableVerticalSwipes();
+        if (window.Telegram && Telegram.WebApp) {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            Telegram.WebApp.disableVerticalSwipes();
+        }
 
-        // Инициализация рекламы (ВСТАВЬ СВОЙ BLOCK ID СЮДА)
-        const AdController = window.Adsgram.init({ blockId: "55150" });
+        // Инициализация Adsgram с защитой от сбоев
+        let AdController = null;
+        
+        function initAdsgram() {
+            try {
+                if (window.Adsgram && typeof window.Adsgram.init === 'function') {
+                    // Убедитесь, что здесь указан ваш точный блок-ID из панели Adsgram
+                    AdController = window.Adsgram.init({ blockId: "55150" });
+                } else {
+                    console.warn("Adsgram SDK не загрузился вовремя.");
+                }
+            } catch (e) {
+                console.error("Ошибка инициализации Adsgram:", e);
+            }
+        }
 
-        // Функция для показа рекламы из Godot
+        // Запускаем инициализацию сразу при загрузке
+        initAdsgram();
+
+        // Безопасная функция для показа рекламы из Godot
         function showTgAd(onSuccess, onError) {
+            // Если контроллер по какой-то причине не инициализировался, пробуем еще раз
+            if (!AdController) {
+                initAdsgram();
+            }
+
             if (AdController) {
                 AdController.show().then((result) => {
-                    onSuccess(); 
+                    if (typeof onSuccess === 'function') onSuccess();  
                 }).catch((result) => {
-                    onError(); 
+                    console.warn("Реклама закрыта или произошла ошибка:", result);
+                    if (typeof onError === 'function') onError();  
                 });
             } else {
-                onError();
+                console.error("AdController недоступен!");
+                if (typeof onError === 'function') onError();
             }
         }
     </script>
