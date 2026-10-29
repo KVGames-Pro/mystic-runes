@@ -3,42 +3,87 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0">
-    <title>Mystic Runes</title>
+    <title>Mystic Runes: Match-3</title>
     <style>
         body { margin: 0; padding: 0; background-color: #000; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; }
     </style>
+    <link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
+<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+
     
-    <!-- Подключаем SDK Telegram -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Подключаем SDK Adsgram -->
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <script>
+        window.GamePlatform = {
+            current: "unknown",
+            init: function() {
+                var url = window.location.href || "";
+                var search = window.location.search || "";
+                var referrer = document.referrer || "";
+
+                // Детект платформ
+                var isVKPlay = search.indexOf("mr_app_id") !== -1 || referrer.indexOf("vkplay.ru") !== -1;
+                var isVK = (search.indexOf("vk_app_id=") !== -1 || search.indexOf("vk_user_id=") !== -1 || search.indexOf("api_id=") !== -1 || search.indexOf("viewer_id=") !== -1 || search.indexOf("vk_client_api") !== -1) && !isVKPlay;
+
+                if (isVKPlay) {
+                    this.current = "vk_play";
+                    // VK Play ничего дополнительно не грузит! Скрипты ВК спрятаны.
+                } else if (isVK) {
+                    this.current = "vk";
+                    // Загружаем скрипт ВК ТОЛЬКО если игра открыта внутри ВКонтакте
+                    document.write('<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"><\/script>');
+                    document.write('<script>try { if (typeof vkBridge !== "undefined") vkBridge.send("VKWebAppInit").catch(function(e){}); } catch(err) {}<\/script>');
+                } else if (referrer.indexOf("yandex.ru") !== -1 || referrer.indexOf("yandex.com") !== -1 || search.indexOf("ysdk") !== -1) {
+                    this.current = "yandex";
+                    var s = document.createElement('script');
+                    s.src = "https://yandex.ru/games/sdk/v2";
+                    s.onload = function() {
+                        YaGames.init().then(function(ysdk) {
+                            window.ysdk = ysdk;
+                            if (ysdk.features && ysdk.features.LoadingAPI && ysdk.features.LoadingAPI.ready) ysdk.features.LoadingAPI.ready();
+                            ysdk.getPurchases({}).then(function(p) { window.yandexPayments = p; }).catch(function(e){});
+                        });
+                    };
+                    document.head.appendChild(s);
+                } else if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
+                    this.current = "telegram";
+                } else if (search.indexOf("application_key=") !== -1 || search.indexOf("logged_in=") !== -1) {
+                    this.current = "ok";
+                }
+            }
+        };
+        window.GamePlatform.init();
+    </script>
 </head>
 <body>
+    
     <canvas id="canvas"></canvas>
+    
     <script src="index.js"></script>
+    
     <script>
-        const engine = new Engine({"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":36989448,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4});
-        engine.startGame();
+        try {
+            var config = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":36996572,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+            config.ensureCrossOriginIsolationHeaders = false;
+            config.emscriptenPoolSize = 0;
+            config.godotPoolSize = 0;
+            delete window.WebAssembly.instantiateStreaming;
+            
+            const engine = new Engine(config);
+            engine.startGame().catch(function(err) {
+                printError("ENGINE START FAILED: " + err.message);
+            });
+        } catch (err) {
+            printError("INIT ERROR: " + err.message);
+        }
 
-        // Расширяем игру на весь экран в Telegram
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        Telegram.WebApp.disableVerticalSwipes();
-
-        // Инициализация рекламы (ВСТАВЬ СВОЙ BLOCK ID СЮДА)
-        const AdController = window.Adsgram.init({ blockId: "55150" });
-
-        // Функция для показа рекламы из Godot
+        // Заглушка для рекламы ТГ, чтобы ничего не ломалось
         function showTgAd(onSuccess, onError) {
-            if (AdController) {
-                AdController.show().then((result) => {
-                    onSuccess(); 
-                }).catch((result) => {
-                    onError(); 
-                });
+            if (typeof window.Adsgram !== 'undefined') {
+                window.Adsgram.init({ blockId: "reward-55151" }).show().then(function(){ if(onSuccess) onSuccess(); }).catch(function(){ if(onError) onError(); });
+            } else if (typeof AdController !== 'undefined') {
+                AdController.show().then(function(){ if(onSuccess) onSuccess(); }).catch(function(){ if(onError) onError(); });
             } else {
-                onError();
+                if(onError) onError();
             }
         }
     </script>
