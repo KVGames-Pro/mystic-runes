@@ -9,7 +9,7 @@
         canvas { width: 100%; height: 100%; display: block; }
     </style>
     <link id="-gd-engine-icon" rel="icon" type="image/png" href="index.icon.png" />
-<link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
+    <link rel="apple-touch-icon" href="index.apple-touch-icon.png"/>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://adsgram.ai/js/adsgram.js"></script>
@@ -21,16 +21,22 @@
                 var search = window.location.search || "";
                 var referrer = document.referrer || "";
 
-                // Детект платформ
+                // Жесткая проверка Telegram (даже если объект загружается чуть дольше)
+                var isTelegram = (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp && window.Telegram.WebApp.initData) || search.includes('tgWebAppVersion') || referrer.includes('t.me');
+                
                 var isVKPlay = search.indexOf("mr_app_id") !== -1 || referrer.indexOf("vkplay.ru") !== -1;
                 var isVK = (search.indexOf("vk_app_id=") !== -1 || search.indexOf("vk_user_id=") !== -1 || search.indexOf("api_id=") !== -1 || search.indexOf("viewer_id=") !== -1 || search.indexOf("vk_client_api") !== -1) && !isVKPlay;
 
-                if (isVKPlay) {
+                if (isTelegram) {
+                    this.current = "telegram";
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        window.Telegram.WebApp.ready();
+                        window.Telegram.WebApp.expand();
+                    }
+                } else if (isVKPlay) {
                     this.current = "vk_play";
-                    // VK Play ничего дополнительно не грузит! Скрипты ВК спрятаны.
                 } else if (isVK) {
                     this.current = "vk";
-                    // Загружаем скрипт ВК ТОЛЬКО если игра открыта внутри ВКонтакте
                     document.write('<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"><\/script>');
                     document.write('<script>try { if (typeof vkBridge !== "undefined") vkBridge.send("VKWebAppInit").catch(function(e){}); } catch(err) {}<\/script>');
                 } else if (referrer.indexOf("yandex.ru") !== -1 || referrer.indexOf("yandex.com") !== -1 || search.indexOf("ysdk") !== -1) {
@@ -45,8 +51,6 @@
                         });
                     };
                     document.head.appendChild(s);
-                } else if (typeof window.Telegram !== 'undefined' && window.Telegram.WebApp) {
-                    this.current = "telegram";
                 } else if (search.indexOf("application_key=") !== -1 || search.indexOf("logged_in=") !== -1) {
                     this.current = "ok";
                 }
@@ -63,7 +67,7 @@
     
     <script>
         try {
-            var config = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":36995740,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
+            var config = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":false,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":37375996,"index.wasm":39514754},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4};
             config.ensureCrossOriginIsolationHeaders = false;
             config.emscriptenPoolSize = 0;
             config.godotPoolSize = 0;
@@ -77,14 +81,25 @@
             printError("INIT ERROR: " + err.message);
         }
 
-        // Заглушка для рекламы ТГ, чтобы ничего не ломалось
+        // Исправленная функция показа рекламы Adsgram для Telegram
         function showTgAd(onSuccess, onError) {
             if (typeof window.Adsgram !== 'undefined') {
-                window.Adsgram.init({ blockId: "reward-55151" }).show().then(function(){ if(onSuccess) onSuccess(); }).catch(function(){ if(onError) onError(); });
+                const adController = window.Adsgram.init({ blockId: "reward-55151" });
+                adController.show().then(function() {
+                    if (onSuccess) onSuccess();
+                }).catch(function(err) {
+                    console.warn("Adsgram show error:", err);
+                    if (onError) onError();
+                });
             } else if (typeof AdController !== 'undefined') {
-                AdController.show().then(function(){ if(onSuccess) onSuccess(); }).catch(function(){ if(onError) onError(); });
+                AdController.show().then(function() {
+                    if (onSuccess) onSuccess();
+                }).catch(function(err) {
+                    if (onError) onError();
+                });
             } else {
-                if(onError) onError();
+                console.warn("Adsgram SDK не найден на странице!");
+                if (onError) onError();
             }
         }
     </script>
