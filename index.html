@@ -81,10 +81,10 @@
             printError("INIT ERROR: " + err.message);
         }
 
-        // Исправленная функция показа рекламы Adsgram для Telegram
+        // Исправленная функция показа наградной рекламы Adsgram для Telegram
         function showTgAd(onSuccess, onError) {
             if (typeof window.Adsgram !== 'undefined') {
-                const adController = window.Adsgram.init({ blockId: "reward-55151" });
+                const adController = window.Adsgram.init({ blockId: "55151" });
                 adController.show().then(function() {
                     if (onSuccess) onSuccess();
                 }).catch(function(err) {
