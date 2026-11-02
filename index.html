@@ -84,7 +84,7 @@
         // Исправленная функция показа наградной рекламы Adsgram для Telegram
         function showTgAd(onSuccess, onError) {
             if (typeof window.Adsgram !== 'undefined') {
-                const adController = window.Adsgram.init({ blockId: "55151" });
+                const adController = window.Adsgram.init({ blockId: "55150" });
                 adController.show().then(function() {
                     if (onSuccess) onSuccess();
                 }).catch(function(err) {
