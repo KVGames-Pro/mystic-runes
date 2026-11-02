@@ -80,7 +80,7 @@
         // Заглушка для рекламы ТГ, чтобы ничего не ломалось
         function showTgAd(onSuccess, onError) {
             if (typeof window.Adsgram !== 'undefined') {
-                window.Adsgram.init({ blockId: "reward-55151" }).show().then(function(){ if(onSuccess) onSuccess(); }).catch(function(){ if(onError) onError(); });
+                window.Adsgram.init({ blockId: "55150" }).show().then(function(){ if(onSuccess) onSuccess(); }).catch(function(){ if(onError) onError(); });
             } else if (typeof AdController !== 'undefined') {
                 AdController.show().then(function(){ if(onSuccess) onSuccess(); }).catch(function(){ if(onError) onError(); });
             } else {
